@@ -51,6 +51,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "aspen-toolbox"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "colored",
+ "prettytable-rs",
+ "ssh2",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -400,16 +410,6 @@ dependencies = [
  "getrandom",
  "libredox",
  "thiserror",
-]
-
-[[package]]
-name = "rust_shell"
-version = "0.1.0"
-dependencies = [
- "clap",
- "colored",
- "prettytable-rs",
- "ssh2",
 ]
 
 [[package]]
