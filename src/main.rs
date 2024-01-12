@@ -27,9 +27,9 @@ fn main() {
 
 fn build_cli() -> Command {
     Command::new("aspen")
-        .name("aspen toolbox")
+        .name("Aspen Toolbox")
         .version("0.0.1")
-        .author("Aspen Soung<songyang420@outlook.com>")
+        .author("Aspen Soung<songyang410@outlook.com>")
         .about("Aspen工具箱")
         .subcommand_required(true)
         .arg_required_else_help(true)
