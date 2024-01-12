@@ -46,7 +46,7 @@ fn build_ssh_toolbox() -> Command {
     // ])
 }
 
-// 试试这个实现
+// 实现SSH工具
 fn impl_ssh_action(_: &ArgMatches) {
     // 清屏
     clear_terminal();
