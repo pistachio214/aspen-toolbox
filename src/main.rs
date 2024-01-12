@@ -194,7 +194,7 @@ fn ssh_login(config: Vec<String>) {
         if exit_status == 0 {
             println!("\n[Aspen Success] ==> 您已退出【 {} 】\n", title.green());
             channel.close().unwrap();
-            process::exit(1);
+            process::exit(0);
         }
     });
 
