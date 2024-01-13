@@ -93,5 +93,5 @@ cargo install aspen
 ```
 #### 展示成果
 ```shell
-% cargo install aspen
+cargo install aspen
 ```
