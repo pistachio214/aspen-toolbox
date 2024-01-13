@@ -1,17 +1,12 @@
 use std::fs::File;
+use std::io::{Read, stdin, stdout, Write};
+use std::net::TcpStream;
 use std::path::Path;
-use clap::{ArgMatches, Command};
+use std::{process, thread};
+use clap::{Arg, ArgMatches, Command};
 use colored::Colorize;
 use prettytable::{format, row, Table};
-use ssh2::{PtyModes};
-use {
-    ssh2::Session,
-    std::{
-        io::{stdin, stdout, Read, Write},
-        net::TcpStream,
-        io, process, thread,
-    },
-};
+use ssh2::{PtyModes, Session};
 
 fn main() {
     // 构建命令详情
@@ -33,24 +28,62 @@ fn build_cli() -> Command {
         .about("Aspen工具箱")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .subcommand(build_ssh_toolbox())
+        .subcommand(
+            // ssh工具箱
+            build_ssh_toolbox()
+        )
 }
 
 // 构建ssh工具的命令详情
 fn build_ssh_toolbox() -> Command {
     Command::new("ssh")
         .about("ssh工具箱")
-    // .args([
-    //     Arg::new("input").help("输入的是啥").required(true),
-    //     Arg::new("name").help("输入名称").required(true)
-    // ])
+        .args([
+            Arg::new("index").help("输入服务器的 序号").required(false),
+        ])
 }
 
 // 实现SSH工具
-fn impl_ssh_action(_: &ArgMatches) {
+fn impl_ssh_action(matches: &ArgMatches) {
     // 清屏
     clear_terminal();
 
+    if let Some(index) = matches.get_one::<String>("index") {
+        ssh_index_action(index.clone());
+    } else {
+        ssh_none_index_action();
+    }
+}
+
+fn ssh_index_action(index: String) {
+    let key: i32 = match index.trim().parse() {
+        Ok(num) => {
+            num
+        }
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "序号只能输入合法的整数!".red(), "序号".green());
+            process::exit(1);
+        }
+    };
+
+    let config_lines = get_config();
+    match config_lines.get((key - 1) as usize) {
+        Some(config) => {
+            if !config.is_empty() {
+                ssh_login(config.clone());
+            }
+        }
+        None => {
+            eprintln!("\n[Aspen Error] => {} \n", "您输入的序号超过了配置项的数量!".red());
+            process::exit(1);
+        }
+    }
+}
+
+/**
+ * 获取配置文件中的服务器数据
+ */
+fn get_config() -> Vec<Vec<String>> {
     let file = "./config.ini";
 
     // 读取服务器配置数据列表
@@ -77,42 +110,7 @@ fn impl_ssh_action(_: &ArgMatches) {
                     }
                 }
 
-                print_services_table(new_lines.clone());
-
-                let mut config_selected: Vec<Vec<String>> = Vec::new();
-
-                if !&new_lines.is_empty() {
-                    println!("请输入 {} 选择要登录的服务器:", "序号".green());
-                    loop {
-                        let mut guess = String::new();
-                        io::stdin().read_line(&mut guess).expect("读取输入错误");
-
-                        let guess: i32 = match guess.trim().parse() {
-                            Ok(num) => {
-                                if num > new_lines.len() as i32 {
-                                    eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "您输入的序号超过了配置项的数量!".red(), "序号".green());
-                                    continue;
-                                }
-
-                                num
-                            }
-                            Err(_) => {
-                                eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "序号只能输入合法的整数!".red(), "序号".green());
-                                continue;
-                            }
-                        };
-
-                        let index = guess - 1;
-                        let config = new_lines.clone().get(index as usize).unwrap().clone();
-
-                        config_selected.push(config);
-                        break;
-                    }
-
-                    if !config_selected.is_empty() {
-                        ssh_login(config_selected.get(0).unwrap().clone());
-                    }
-                }
+                new_lines.clone()
             }
             Err(err) => {
                 eprintln!("[Aspen Error] => Unable to read the file. {:?}", err);
@@ -125,6 +123,50 @@ fn impl_ssh_action(_: &ArgMatches) {
     }
 }
 
+/**
+没有输入index 的情况就要打印出服务器列表,然后执行后面的操作
+ */
+fn ssh_none_index_action() {
+    let config_lines = get_config();
+
+    print_services_table(config_lines.clone());
+
+    let mut config_selected: Vec<Vec<String>> = Vec::new();
+
+    if !&config_lines.is_empty() {
+        println!("请输入 {} 选择要登录的服务器:", "序号".green());
+        loop {
+            let mut guess = String::new();
+            stdin().read_line(&mut guess).expect("读取输入错误");
+
+            let guess: i32 = match guess.trim().parse() {
+                Ok(num) => {
+                    if num > config_lines.len() as i32 {
+                        eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "您输入的序号超过了配置项的数量!".red(), "序号".green());
+                        continue;
+                    }
+
+                    num
+                }
+                Err(_) => {
+                    eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "序号只能输入合法的整数!".red(), "序号".green());
+                    continue;
+                }
+            };
+
+            let index = guess - 1;
+            let config = config_lines.clone().get(index as usize).unwrap().clone();
+
+            config_selected.push(config);
+            break;
+        }
+
+        if !config_selected.is_empty() {
+            ssh_login(config_selected.get(0).unwrap().clone());
+        }
+    }
+}
+
 fn ssh_login(config: Vec<String>) {
     let connect = format!("{}:{}", config[0].clone(), config[2].clone());
     let username = config[3].clone();
@@ -133,7 +175,14 @@ fn ssh_login(config: Vec<String>) {
 
     println!("\n[Aspen Waiting] ==> 正在登录【 {} 】，请稍等...", title.green());
 
-    let mut sess = Session::new().unwrap();
+    let mut sess = match Session::new() {
+        Ok(session) => session,
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机进行 Session 链接失败！".red());
+            process::exit(1);
+        }
+    };
+
     match TcpStream::connect(connect) {
         Ok(tcp) => {
             sess.set_tcp_stream(tcp);
@@ -144,9 +193,51 @@ fn ssh_login(config: Vec<String>) {
         }
     }
 
-    sess.handshake().unwrap();
+    match sess.handshake() {
+        Ok(_) => (),
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机进行传输层协议协商失败!".red());
+            process::exit(1);
+        }
+    }
 
     match sess.userauth_password(&username, &password) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("\n[Aspen Error] => {}\n", e.message().red());
+            process::exit(1);
+        }
+    }
+
+    let mut pty_modes = PtyModes::new();
+    pty_modes.set_boolean(ssh2::PtyModeOpcode::ECHO, false); //关闭回显
+    pty_modes.set_boolean(ssh2::PtyModeOpcode::IGNCR, true); //忽略输入的回车
+
+    let mut channel = match sess.channel_session() {
+        Ok(channel) => channel,
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机会话通道建立失败".red());
+            process::exit(1);
+        }
+    };
+
+    match channel.request_pty("xterm", Some(pty_modes), None) {
+        Ok(_) => {}
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机会话通道请求PTY失败！".red());
+            process::exit(1);
+        }
+    }
+
+    match channel.shell() {
+        Ok(_) => {}
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "启动SSH失败！".red());
+            process::exit(1);
+        }
+    }
+
+    match channel.handle_extended_data(ssh2::ExtendedData::Merge) {
         Ok(_) => {}
         Err(e) => {
             eprintln!("\n[Aspen Error] => {}\n", e.message().red());
@@ -154,18 +245,9 @@ fn ssh_login(config: Vec<String>) {
         }
     }
 
-    // sess.userauth_password(&username, &password).unwrap();
-
-    let mut pty_modes = PtyModes::new();
-    pty_modes.set_boolean(ssh2::PtyModeOpcode::ECHO, false); //关闭回显
-    pty_modes.set_boolean(ssh2::PtyModeOpcode::IGNCR, true); //忽略输入的回车
-
-    let mut channel = sess.channel_session().unwrap();
-    channel.request_pty("xterm", Some(pty_modes), None).unwrap();
-    channel.shell().unwrap();
-    channel.handle_extended_data(ssh2::ExtendedData::Merge).unwrap();
-
+    // 阻塞模式最后设置,避免实例化操作链接会阻塞
     sess.set_blocking(false);
+
     let mut ssh_stdin = channel.stream(0);
 
     let stdin_thread = thread::spawn(move || {
@@ -190,7 +272,15 @@ fn ssh_login(config: Vec<String>) {
             }
         }
 
-        let exit_status = channel.exit_status().unwrap();
+        let exit_status = match channel.exit_status() {
+            Ok(n) => n,
+            Err(_) => {
+                eprintln!("\n[Aspen Error] => {}\n", "主机会话状态丢失！".red());
+                channel.close().unwrap();
+                process::exit(0);
+            }
+        };
+
         if exit_status == 0 {
             println!("\n[Aspen Success] ==> 您已退出【 {} 】\n", title.green());
             channel.close().unwrap();
@@ -243,5 +333,6 @@ fn clear_terminal() {
 }
 
 fn error_action() {
-    println!("发生了错误")
+    eprintln!("\n[Aspen Error] => {} ", "非法指令".red(), );
+    process::exit(1);
 }
