@@ -1,8 +1,10 @@
-use std::fs::File;
-use std::io::{Read, stdin, stdout, Write};
-use std::net::TcpStream;
-use std::path::Path;
-use std::{process, thread};
+use std::{
+    fs::File,
+    io::{Read, stdin, stdout, Write},
+    net::TcpStream,
+    path::Path,
+    {process, thread},
+};
 use clap::{Arg, ArgMatches, Command};
 use colored::Colorize;
 use prettytable::{format, row, Table};
@@ -16,6 +18,7 @@ fn main() {
 
     match matches.subcommand() {
         Some(("ssh", sub_matches)) => impl_ssh_action(sub_matches),
+        Some(("servers", sub_matches)) => impl_servers_table_action(sub_matches),
         _ => error_action(),
     }
 }
@@ -28,10 +31,10 @@ fn build_cli() -> Command {
         .about("Aspen工具箱")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .subcommand(
-            // ssh工具箱
-            build_ssh_toolbox()
-        )
+        // ssh工具箱
+        .subcommand(build_ssh_toolbox())
+        // 查看已配置的服务器列表
+        .subcommand(build_ssh_servers_table_toolbox())
 }
 
 // 构建ssh工具的命令详情
@@ -41,6 +44,11 @@ fn build_ssh_toolbox() -> Command {
         .args([
             Arg::new("index").help("输入服务器的 序号").required(false),
         ])
+}
+
+fn build_ssh_servers_table_toolbox() -> Command {
+    Command::new("servers")
+        .about("查看已配置的服务器列表")
 }
 
 // 实现SSH工具
@@ -53,6 +61,15 @@ fn impl_ssh_action(matches: &ArgMatches) {
     } else {
         ssh_none_index_action();
     }
+}
+
+// 实现查看已配置服务器列表
+fn impl_servers_table_action(_: &ArgMatches) {
+    // 清屏
+    clear_terminal();
+
+    let config_lines = get_config();
+    print_services_table(config_lines);
 }
 
 fn ssh_index_action(index: String) {
