@@ -1,3 +1,4 @@
+config.json
 /target
-/config.ini
-/.idea
+.idea
+.DS_Store
