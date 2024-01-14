@@ -1,9 +1,9 @@
 [package]
-name = "aspen-toolbox"
+name = "aspentool"
 version = "0.1.0"
 edition = "2021"
 
-description="用于各种任务的有用开发工具"
+description="关于SSH任务的工具"
 license="MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -21,12 +21,12 @@
 
 ### 第 4 步：使用工具
 
-一旦安装，你就可以直接在命令行中使用 `aspen`，例如：
+一旦安装，你就可以直接在命令行中使用 `aspentool`，例如：
 
 ```bash
-aspen ssh 
-aspen ssh 1
-aspen servers
+aspentool ssh 
+aspentool ssh 1
+aspentool servers
 ```
 但是通过复制的方法安装命令行，实在是不够 <del style="text-decoration: line-through; color: ＃C0C0C0;">（悠亚）</del> 优雅，必须要使用一种装逼的方式来安装。因此，下面的步骤才是命令行装逼的关键，支持cargo安装。
 
@@ -56,7 +56,7 @@ cargo login [your_api_token]
 
 ```toml
 [package]
-name = "aspen-toolbox"
+name = "aspentool"
 version = "0.1.0"
 authors = ["Aspen Soung <songyang410@outlook.com>"]
 edition = "2021"
@@ -93,5 +93,5 @@ cargo install aspen
 ```
 #### 展示成果
 ```shell
-aspen servers
+aspentool servers
 ```
