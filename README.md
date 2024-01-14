@@ -89,7 +89,7 @@ cargo publish
 一旦你的包被成功发布到 crates.io，其他人就可以通过运行以下命令来安装你的工具：
 
 ```bash
-cargo install aspen
+cargo install aspentool
 ```
 #### 展示成果
 ```shell
