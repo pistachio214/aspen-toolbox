@@ -51,8 +51,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "aspen-toolbox"
-version = "0.1.0"
+name = "aspentool"
+version = "0.1.1"
 dependencies = [
  "clap",
  "colored",

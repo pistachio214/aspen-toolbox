@@ -24,9 +24,12 @@ pub fn run() {
  * 构建命令
  */
 pub fn build_cli() -> Command {
+    // 以Cargo.toml的版本为命令的版本号
+    let version = env!("CARGO_PKG_VERSION");
+
     Command::new("aspen")
         .name("Aspen Toolbox")
-        .version("0.0.1")
+        .version(version)
         .author("Aspen Soung<songyang410@outlook.com>")
         .about("Aspen工具箱")
         .subcommand_required(true)
