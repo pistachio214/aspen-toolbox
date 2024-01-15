@@ -244,7 +244,7 @@ fn ssh_login(config: &ServerConfig) {
     });
 
     let stdout_thread = thread::spawn(move || {
-        print!("\n {} \n", "Login Successful!!!".green());
+        println!("\n {} \n", "Login Successful!!!".green());
         loop {
             let mut buf = [0; 1024];
             match channel.read(&mut buf) {
