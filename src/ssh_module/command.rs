@@ -11,9 +11,6 @@ use crate::ssh_module::config::{get_config, ServerConfig};
 
 // ssh 命令实现
 pub fn impl_ssh_action(matches: &ArgMatches) {
-    // 清屏
-    clear_terminal();
-
     if let Some(index) = matches.get_one::<String>("index") {
         ssh_index_action(index.clone());
     } else {
@@ -111,9 +108,6 @@ fn ssh_index_action(index: String) {
  */
 pub fn impl_servers_table_action(_: &ArgMatches) {
     let config_lines = get_config();
-
-    // 清屏
-    clear_terminal();
 
     print_services_table(&config_lines);
 }
@@ -275,10 +269,4 @@ fn ssh_login(config: &ServerConfig) {
 
     stdin_thread.join().unwrap();
     stdout_thread.join().unwrap();
-}
-
-//清屏
-fn clear_terminal() {
-    print!("\x1b[2J");
-    print!("\x1b[H");
 }
