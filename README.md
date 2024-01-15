@@ -24,15 +24,20 @@
 一旦安装，你就可以直接在命令行中使用 `aspentool`，例如：
 
 ```bash
+# 先选择要链接的服务器,然后登录
 aspentool ssh 
+# 知道服务器的编号,直接登录该编号服务器
 aspentool ssh 1
-aspentool servers
+# 查看所有已配置的服务器列表
+aspentool all
+# 设置服务器配置的地址
+aspentool set-path /xx/xxx/xxx.json
 ```
 但是通过复制的方法安装命令行，实在是不够 <del style="text-decoration: line-through; color: ＃C0C0C0;">（悠亚）</del> 优雅，必须要使用一种装逼的方式来安装。因此，下面的步骤才是命令行装逼的关键，支持cargo安装。
 
 ### 第5步，支持cargo安装
 
-要使你的 `aspen` 命令行工具能够通过 `cargo install` 安装，你需要将其发布到 [crates.io](https://crates.io/)，这是 Rust 的包管理仓库。在发布之前，你需要创建一个帐户并获取一个 API 令牌用于身份验证。以下是将你的工具准备并发布到 crates.io 的步骤：
+要使你的 `aspentool` 命令行工具能够通过 `cargo install` 安装，你需要将其发布到 [crates.io](https://crates.io/)，这是 Rust 的包管理仓库。在发布之前，你需要创建一个帐户并获取一个 API 令牌用于身份验证。以下是将你的工具准备并发布到 crates.io 的步骤：
 
 #### 第（1）步：注册 crates.io 帐户
 
@@ -91,7 +96,4 @@ cargo publish
 ```bash
 cargo install aspentool
 ```
-#### 展示成果
-```shell
-aspentool servers
-```
+
