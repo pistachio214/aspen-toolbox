@@ -14,8 +14,8 @@ pub fn run() {
 
     match matches.subcommand() {
         Some(("ssh", sub_matches)) => impl_ssh_action(sub_matches),
-        Some(("servers", sub_matches)) => impl_servers_table_action(sub_matches),
-        Some(("server-path", sub_matches)) => import_set_servers_path_action(sub_matches),
+        Some(("all", sub_matches)) => impl_servers_table_action(sub_matches),
+        Some(("set-path", sub_matches)) => import_set_servers_path_action(sub_matches),
         _ => error_action(),
     }
 }
@@ -53,7 +53,7 @@ fn build_ssh_toolbox() -> Command {
 
 // 构建查看服务器列表命令
 fn build_ssh_servers_table_toolbox() -> Command {
-    Command::new("servers")
+    Command::new("all")
         .about("查看已配置的服务器列表")
 }
 
@@ -61,7 +61,7 @@ fn build_ssh_servers_table_toolbox() -> Command {
 fn build_set_servers_path_toolbox() -> Command {
     let about = format!("设置服务器的配置文件地址({})", "建议绝对地址".green());
 
-    Command::new("server-path")
+    Command::new("set-path")
         .about(about)
         .arg(Arg::new("path").help("请输入服务器配置文件地址(建议绝对地址)").required(true))
 }
