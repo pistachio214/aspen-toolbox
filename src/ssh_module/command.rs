@@ -94,6 +94,9 @@ fn ssh_index_action(index: String) {
     let config_lines = get_config();
     match config_lines.get((key - 1) as usize) {
         Some(config) => {
+            // 清屏
+            clear_terminal();
+
             ssh_login(config);
         }
         None => {
@@ -138,6 +141,9 @@ fn print_services_table(lines: &Vec<ServerConfig>) {
             table.add_row(row![(index+1), line.host, line.port,line.username,line.title]);
         }
     }
+
+    // 清屏
+    clear_terminal();
 
     // 打印表格到标准输出
     table.printstd();
@@ -269,4 +275,10 @@ fn ssh_login(config: &ServerConfig) {
 
     stdin_thread.join().unwrap();
     stdout_thread.join().unwrap();
+}
+
+//清屏
+fn clear_terminal() {
+    print!("\x1b[2J");
+    print!("\x1b[H");
 }
