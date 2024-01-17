@@ -2,7 +2,11 @@ use std::process;
 use clap::{Arg, Command};
 use colored::Colorize;
 
-use crate::ssh_module::command::{impl_servers_table_action, impl_ssh_action, import_set_servers_path_action};
+use crate::ssh_module::command::{
+    impl_servers_table_action, impl_ssh_action,
+    import_get_servers_path_action,
+    import_set_servers_path_action,
+};
 
 // 启动aspen命令
 pub fn run() {
@@ -16,6 +20,7 @@ pub fn run() {
         Some(("ssh", sub_matches)) => impl_ssh_action(sub_matches),
         Some(("all", sub_matches)) => impl_servers_table_action(sub_matches),
         Some(("set-path", sub_matches)) => import_set_servers_path_action(sub_matches),
+        Some(("get-path", sub_matches)) => import_get_servers_path_action(sub_matches),
         _ => error_action(),
     }
 }
@@ -40,6 +45,8 @@ pub fn build_cli() -> Command {
         .subcommand(build_ssh_servers_table_toolbox())
         // 设置服务器配置文件地址
         .subcommand(build_set_servers_path_toolbox())
+        // 获取服务器配置文件地址
+        .subcommand(build_get_servers_path_toolbox())
 }
 
 // 构建ssh工具的命令
@@ -64,6 +71,12 @@ fn build_set_servers_path_toolbox() -> Command {
     Command::new("set-path")
         .about(about)
         .arg(Arg::new("path").help("请输入服务器配置文件地址(建议绝对地址)").required(true))
+}
+
+// 构建获取服务器配置地址命令
+fn build_get_servers_path_toolbox() -> Command {
+    Command::new("get-path")
+        .about("获取服务器的配置文件地址")
 }
 
 fn error_action() {

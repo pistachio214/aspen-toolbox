@@ -40,6 +40,16 @@ pub fn import_set_servers_path_action(matches: &ArgMatches) {
 }
 
 /**
+ * 实现获取服务器配置文件地址
+ */
+pub fn import_get_servers_path_action(_: &ArgMatches) {
+    let aspen_config = get_aspen_config();
+
+    println!("\n[Aspen Success] ==> Servers Path: {}\n", aspen_config.service_config_path.green());
+    process::exit(0);
+}
+
+/**
  * 实现 ssh 命令,没有输入index
  */
 fn ssh_none_index_action() {
