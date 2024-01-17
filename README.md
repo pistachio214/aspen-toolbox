@@ -32,6 +32,8 @@ aspentool ssh 1
 aspentool all
 # 设置服务器配置的地址
 aspentool set-path /xx/xxx/xxx.json
+# 获取服务器配置的地址
+aspentool get-path
 ```
 但是通过复制的方法安装命令行，实在是不够 <del style="text-decoration: line-through; color: ＃C0C0C0;">（悠亚）</del> 优雅，必须要使用一种装逼的方式来安装。因此，下面的步骤才是命令行装逼的关键，支持cargo安装。
 
