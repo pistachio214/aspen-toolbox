@@ -182,7 +182,7 @@ fn ssh_login(config: &ServerConfig) {
     // macOS 平台下处理
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        // 获取当前项目的路径
+        // 开发阶段使用本地路径,获取当前项目的路径
         let project_dir = match env::current_dir() {
             Ok(dir) => dir,
             Err(_) => {
@@ -190,17 +190,23 @@ fn ssh_login(config: &ServerConfig) {
                 process::exit(0);
             }
         };
-
         let path = project_dir.to_string_lossy().into_owned();
 
-        // 要执行的 Shell 脚本
         let script = format!("{}/sh/controller.sh", path);
 
         // 参数列表 (名称,IP,Port,用户名,密码)
-        let args = vec![title.clone(), config.host.clone(), config.port.clone().to_string(), username.clone(), password.clone()];
+        let args = vec![
+            "-e".to_string(),
+            script,
+            title.clone(),
+            config.host.clone(),
+            config.port.clone().to_string(),
+            username.clone(),
+            password.clone(),
+        ];
 
         // 执行用户输入的命令
-        let mut child = process::Command::new(script)
+        let mut child = process::Command::new("sh")
             .args(&args)
             .spawn()
             .expect("执行命令失败");
@@ -314,7 +320,7 @@ fn ssh_login(config: &ServerConfig) {
             }
         }
 
-        // 阻塞模式最后设置,避免实例化操作链接会阻塞
+// 阻塞模式最后设置,避免实例化操作链接会阻塞
         sess.set_blocking(false);
 
         let mut ssh_stdin = channel.stream(0);
