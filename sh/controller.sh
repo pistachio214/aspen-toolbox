@@ -7,8 +7,8 @@
 # echo "参数5: $5"
 
 # 获取当前文件所在目录的绝对路径
-current_dir=$(dirname "$(realpath "$0")")
+#current_dir=$(dirname "$(realpath "$0")")
 
 # 执行命令，并显示输出结果
-eval "$(which expect) $current_dir/script.ex $1 $2 $3 $4 $5"
+eval "$(which expect) sh/script.ex $1 $2 $3 $4 $5"
 
