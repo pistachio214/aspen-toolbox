@@ -214,13 +214,25 @@ fn ssh_login(config: &ServerConfig) {
         // 从子进程的 stdout 获取一个读取器
         if let Some(mut stdout) = child.stdout.take() {
             // 从子进程读取输出
-            io::copy(&mut stdout, &mut io::stdout()).unwrap();
+            match io::copy(&mut stdout, &mut io::stdout()) {
+                Ok(_) => (),
+                Err(_) => {
+                    eprintln!("\n[Aspen Error] => {}\n", "从子进程读取输出失败！".red());
+                    process::exit(0);
+                }
+            }
         }
 
         // 从子进程的 stderr 获取一个读取器
         if let Some(mut stderr) = child.stderr.take() {
             // 从子进程读取错误信息
-            io::copy(&mut stderr, &mut io::stderr()).unwrap();
+            match io::copy(&mut stderr, &mut io::stderr()) {
+                Ok(_) => (),
+                Err(_) => {
+                    eprintln!("\n[Aspen Error] => {}\n", "从子进程读取错误信息失败！".red());
+                    process::exit(0);
+                }
+            }
         }
 
         // 等待子进程执行完毕
