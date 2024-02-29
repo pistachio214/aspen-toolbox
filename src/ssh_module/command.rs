@@ -241,6 +241,7 @@ fn ssh_login(config: &ServerConfig) {
         process::exit(0);
     }
 
+    // windows平台下处理
     #[cfg(target_os = "windows")]
     {
         let mut sess = match Session::new() {
