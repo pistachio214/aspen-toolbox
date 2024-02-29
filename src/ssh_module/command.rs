@@ -8,6 +8,7 @@ use ssh2::{PtyModes, Session};
 
 use crate::aspen_module::config::{get_aspen_config, write_aspen_config};
 use crate::ssh_module::config::{get_config, ServerConfig};
+use crate::aspen_module::cli::get_home_dir;
 
 // ssh 命令实现
 pub fn impl_ssh_action(matches: &ArgMatches) {
@@ -182,8 +183,9 @@ fn ssh_login(config: &ServerConfig) {
     // macOS 平台下处理
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        let path = std::env::current_dir().unwrap();
-        let controller_path = path.to_str().unwrap().to_string() + "/shell/controller.sh";
+        let dir = env!("CARGO_PKG_NAME");
+
+        let controller_path = format!("{}/{}/shell/controller.sh", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
 
         // 参数列表 (名称,IP,Port,用户名,密码)
         let args = vec![
@@ -311,7 +313,7 @@ fn ssh_login(config: &ServerConfig) {
             }
         }
 
-// 阻塞模式最后设置,避免实例化操作链接会阻塞
+        // 阻塞模式最后设置,避免实例化操作链接会阻塞
         sess.set_blocking(false);
 
         let mut ssh_stdin = channel.stream(0);

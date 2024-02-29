@@ -6,7 +6,7 @@ use colored::Colorize;
 
 use std::io::prelude::*;
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::ssh_module::command::{
     impl_servers_table_action, impl_ssh_action,
@@ -14,12 +14,24 @@ use crate::ssh_module::command::{
     import_set_servers_path_action,
 };
 
+pub fn get_home_dir() -> PathBuf {
+    let home_dir = match dirs::home_dir() {
+        None => {
+            eprintln!("\n[Aspen Error] => {} \n", "系统主目录获取失败".red(), );
+            process::exit(0);
+        }
+        Some(dir) => dir
+    };
+
+    home_dir
+}
+
 pub fn init_aspen() {
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        let path = std::env::current_dir().unwrap();
+        let dir = env!("CARGO_PKG_NAME");
 
-        let shell_dir = path.to_str().unwrap().to_string() + "/shell";
+        let shell_dir = format!("{}/{}/shell", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
         println!("执行脚本位置: {}", shell_dir);
         // 检查文件夹是否存在，如果不存在则创建
         if !Path::new(&shell_dir).exists() {
