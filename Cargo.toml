@@ -1,6 +1,6 @@
 [package]
 name = "aspentool"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 
 description = "关于SSH任务的工具"
