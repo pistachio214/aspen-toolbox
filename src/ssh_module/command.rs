@@ -194,7 +194,7 @@ fn ssh_login(config: &ServerConfig) {
         let path = project_dir.to_string_lossy().into_owned();
 
         // 要执行的 Shell 脚本
-        let script = format!("{}/sh/prompted_input.sh", path);
+        let script = format!("{}/sh/controller.sh", path);
 
         // 参数列表 (名称,IP,Port,用户名,密码)
         let args = vec![title.clone(), config.host.clone(), config.port.clone().to_string(), username.clone(), password.clone()];
