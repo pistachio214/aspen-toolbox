@@ -182,17 +182,7 @@ fn ssh_login(config: &ServerConfig) {
     // macOS 平台下处理
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        // 开发阶段使用本地路径,获取当前项目的路径
-        let project_dir = match env::current_dir() {
-            Ok(dir) => dir,
-            Err(_) => {
-                eprintln!("无法获取当前项目的路径");
-                process::exit(0);
-            }
-        };
-        let path = project_dir.to_string_lossy().into_owned();
-
-        let script = format!("{}/sh/controller.sh", path);
+        let script = "sh/controller.sh".to_string();
 
         // 参数列表 (名称,IP,Port,用户名,密码)
         let args = vec![
