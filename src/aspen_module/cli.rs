@@ -1,11 +1,12 @@
 use std::{fs, process};
-use std::fs::{OpenOptions, File};
+use std::fs::{OpenOptions};
 
 use clap::{Arg, Command};
 use colored::Colorize;
 
 use std::io::prelude::*;
-use std::os::unix::fs::{OpenOptionsExt};
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+use std::path::Path;
 
 use crate::ssh_module::command::{
     impl_servers_table_action, impl_ssh_action,
@@ -18,13 +19,25 @@ pub fn init_aspen() {
     {
         let path = std::env::current_dir().unwrap();
 
-        let controller_path = path.to_str().unwrap().to_string() + "/shell/controller.sh";
+        let shell_dir = path.to_str().unwrap().to_string() + "/shell";
+        // 检查文件夹是否存在，如果不存在则创建
+        if !Path::new(&shell_dir).exists() {
+            fs::create_dir_all(&shell_dir)?;
+
+            // 设置文件夹权限为 775
+            let metadata = fs::metadata(&shell_dir)?;
+            let mut permissions = metadata.permissions();
+            permissions.set_mode(0o775);
+            fs::set_permissions(&shell_dir, permissions)?;
+        }
+
+        let controller_path = shell_dir.clone() + "/controller.sh";
         // 要写入的内容
         let controller_content = "#!/bin/bash\n\ncurrent_dir=$(dirname \"$(realpath \"$0\")\")\n\neval \"$(which expect) $current_dir/script.ex $1 $2 $3 $4 $5\"";
 
         generate_shell(controller_path, controller_content);
 
-        let script_path = path.to_str().unwrap().to_string() + "/shell/script.ex";
+        let script_path = shell_dir.clone() + "/script.ex";
         let script_content = "#!/usr/bin/expect\n\nset SERVER_NAME [lindex $argv 0]\nset IP [lindex $argv 1]\nset PORT [lindex $argv 2]\nset USER_NAME [lindex $argv 3]\nset PASSWORD [lindex $argv 4]\n\nspawn ssh -p $PORT $USER_NAME@$IP\n\nexpect {\n    -timeout 300\n    \"*assword\" { send \"$PASSWORD\\r\\n\"; exp_continue ; sleep 3; }\n    \"yes/no\" { send yes\\n\"; exp_continue; }\n    \"Last*\" {\n        puts \"\\nLogin Successful!!!\\n\";\n    }\n    timeout { puts \"Expect was timeout.\"; return }\n}\n\ninteract\n";
 
         generate_shell(script_path, script_content);
