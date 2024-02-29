@@ -182,12 +182,13 @@ fn ssh_login(config: &ServerConfig) {
     // macOS 平台下处理
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        let script = "sh/controller.sh".to_string();
+        let path = std::env::current_dir().unwrap();
+        let controller_path = path.to_str().unwrap().to_string() + "/shell/controller.sh";
 
         // 参数列表 (名称,IP,Port,用户名,密码)
         let args = vec![
             "-e".to_string(),
-            script,
+            controller_path,
             title.clone(),
             config.host.clone(),
             config.port.clone().to_string(),

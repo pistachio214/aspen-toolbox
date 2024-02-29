@@ -1,12 +1,35 @@
-use std::process;
+use std::{fs, process};
+use std::fs::{OpenOptions, File};
+
 use clap::{Arg, Command};
 use colored::Colorize;
+
+use std::io::prelude::*;
+use std::os::unix::fs::{OpenOptionsExt};
 
 use crate::ssh_module::command::{
     impl_servers_table_action, impl_ssh_action,
     import_get_servers_path_action,
     import_set_servers_path_action,
 };
+
+pub fn init_aspen() {
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    {
+        let path = std::env::current_dir().unwrap();
+
+        let controller_path = path.to_str().unwrap().to_string() + "/shell/controller.sh";
+        // 要写入的内容
+        let controller_content = "#!/bin/bash\n\ncurrent_dir=$(dirname \"$(realpath \"$0\")\")\n\neval \"$(which expect) $current_dir/script.ex $1 $2 $3 $4 $5\"";
+
+        generate_shell(controller_path, controller_content);
+
+        let script_path = path.to_str().unwrap().to_string() + "/shell/script.ex";
+        let script_content = "#!/usr/bin/expect\n\nset SERVER_NAME [lindex $argv 0]\nset IP [lindex $argv 1]\nset PORT [lindex $argv 2]\nset USER_NAME [lindex $argv 3]\nset PASSWORD [lindex $argv 4]\n\nspawn ssh -p $PORT $USER_NAME@$IP\n\nexpect {\n    -timeout 300\n    \"*assword\" { send \"$PASSWORD\\r\\n\"; exp_continue ; sleep 3; }\n    \"yes/no\" { send yes\\n\"; exp_continue; }\n    \"Last*\" {\n        puts \"\\nLogin Successful!!!\\n\";\n    }\n    timeout { puts \"Expect was timeout.\"; return }\n}\n\ninteract\n";
+
+        generate_shell(script_path, script_content);
+    }
+}
 
 // 启动aspen命令
 pub fn run() {
@@ -82,4 +105,34 @@ fn build_get_servers_path_toolbox() -> Command {
 fn error_action() {
     eprintln!("\n[Aspen Error] => {} \n", "非法指令".red(), );
     process::exit(0);
+}
+
+// 构建脚本
+fn generate_shell(file_path: String, content: &str) {
+    match fs::metadata(&file_path) {
+        Ok(_) => {}
+        Err(_) => {
+            // 创建文件并打开以进行写入，如果文件不存在则会创建它
+            let mut file = match OpenOptions::new()
+                .write(true)
+                .create(true)
+                .mode(0o775) // 设置权限为 775
+                .open(&file_path) {
+                Ok(file) => file,
+                Err(_) => {
+                    eprintln!("\n[Aspen Error] => {} \n", "创建脚本失败".red(), );
+                    process::exit(0);
+                }
+            };
+
+            // 将内容写入文件
+            match file.write_all(content.as_bytes()) {
+                Ok(_) => {}
+                Err(_) => {
+                    eprintln!("\n[Aspen Error] => {} \n", "写入脚本内容失败！".red());
+                    process::exit(0);
+                }
+            }
+        }
+    }
 }
