@@ -32,7 +32,6 @@ pub fn init_aspen() {
         let dir = env!("CARGO_PKG_NAME");
 
         let shell_dir = format!("{}/{}/shell", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
-        println!("执行脚本位置: {}", shell_dir);
         // 检查文件夹是否存在，如果不存在则创建
         if !Path::new(&shell_dir).exists() {
             fs::create_dir_all(&shell_dir).unwrap();
