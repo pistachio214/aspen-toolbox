@@ -20,15 +20,16 @@ pub fn init_aspen() {
         let path = std::env::current_dir().unwrap();
 
         let shell_dir = path.to_str().unwrap().to_string() + "/shell";
+        println!("执行脚本位置: {}", shell_dir);
         // 检查文件夹是否存在，如果不存在则创建
         if !Path::new(&shell_dir).exists() {
-            fs::create_dir_all(&shell_dir)?;
+            fs::create_dir_all(&shell_dir).unwrap();
 
             // 设置文件夹权限为 775
-            let metadata = fs::metadata(&shell_dir)?;
+            let metadata = fs::metadata(&shell_dir).unwrap();
             let mut permissions = metadata.permissions();
             permissions.set_mode(0o775);
-            fs::set_permissions(&shell_dir, permissions)?;
+            fs::set_permissions(&shell_dir, permissions).unwrap();
         }
 
         let controller_path = shell_dir.clone() + "/controller.sh";
