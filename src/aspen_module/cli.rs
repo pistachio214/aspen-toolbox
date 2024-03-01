@@ -147,16 +147,14 @@ pub fn generate_folder(folder_path: String) {
                 }
             };
 
-            if cfg!(target_os = "macos") || cfg!(target_os = "linux" || ) {
-                // 设置文件夹权限为 775
-                let mut permissions = metadata.permissions();
-                permissions.set_mode(0o775);
-                match fs::set_permissions(&folder_path, permissions) {
-                    Ok(_) => {}
-                    Err(_) => {
-                        eprintln!("\n[Aspen Error] => 设置文件夹 {} 权限失败！ \n", folder_path.red(), );
-                        process::exit(0);
-                    }
+            // 设置文件夹权限为 775
+            let mut permissions = metadata.permissions();
+            permissions.set_mode(0o775);
+            match fs::set_permissions(&folder_path, permissions) {
+                Ok(_) => {}
+                Err(_) => {
+                    eprintln!("\n[Aspen Error] => 设置文件夹 {} 权限失败！ \n", folder_path.red(), );
+                    process::exit(0);
                 }
             }
         }
