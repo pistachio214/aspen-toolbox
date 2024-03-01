@@ -119,4 +119,3 @@ pub fn write_aspen_config(config: &Config) -> Result<(), Box<dyn std::error::Err
         }
     }
 }
-}
