@@ -8,11 +8,12 @@ use crate::aspen_module::config::{get_aspen_config};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServerConfig {
     pub title: String,
+    pub category: String,
     pub host: String,
     pub port: u32,
     pub username: String,
     pub password: String,
-    pub category: String,
+    pub remark: String,
 }
 
 /**

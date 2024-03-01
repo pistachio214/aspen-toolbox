@@ -144,12 +144,12 @@ fn print_services_table(lines: &Vec<ServerConfig>) {
 
     table.set_format(format);
     // 设置标题
-    table.set_titles(row!["ID","Title","Host","Port","Server type","Username",]);
+    table.set_titles(row!["ID","Title","Host","Port","Server type","Username","Remark"]);
 
     // 添加行
     if !lines.is_empty() {
         for (index, line) in lines.iter().enumerate() {
-            table.add_row(row![(index+1),line.title, line.host, line.port,line.category,line.username]);
+            table.add_row(row![(index+1),line.title, line.host, line.port,line.category,line.username,line.remark]);
         }
     }
 
