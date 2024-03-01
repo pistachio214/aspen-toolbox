@@ -2,11 +2,9 @@ use std::{
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
     io::{Read, Write, prelude::*},
-    fs,
 };
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 
 use crate::aspen_module::cli::{generate_folder, get_home_dir};
 
@@ -92,36 +90,33 @@ pub fn read_config(file_path: &PathBuf) -> Result<Config, Box<dyn std::error::Er
  * 写入指定文件内容
  */
 pub fn write_aspen_config(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(home_dir) = dirs::home_dir() {
-        // 命令指定的配置文件位置
-        let config_path = home_dir.join("aspen_config.json");
-        let mut file = match OpenOptions::new().write(true).truncate(true).open(config_path) {
-            Ok(f) => f,
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {} \n", "打开指定配置文件错误!".red());
-                std::process::exit(0);
-            }
-        };
+    let dir = env!("CARGO_PKG_NAME");
+    let config_path = format!("{}/{}/config/aspen_config.json", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
 
-        let json_string = match serde_json::to_string_pretty(config) {
-            Ok(s) => s,
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {} \n", "写入的配置信息转为json失败!".red());
-                std::process::exit(0);
-            }
-        };
-
-        match file.write_all(json_string.as_bytes()) {
-            Ok(_) => {
-                Ok(())
-            }
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {} \n", "写入Aspen配置文件失败!".red());
-                std::process::exit(0);
-            }
+    let mut file = match OpenOptions::new().write(true).truncate(true).open(config_path) {
+        Ok(f) => f,
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {} \n", "打开指定配置文件错误!".red());
+            std::process::exit(0);
         }
-    } else {
-        eprintln!("\n[Aspen Error] => {} \n", "无法获取用户主目录!".red());
-        std::process::exit(0);
+    };
+
+    let json_string = match serde_json::to_string_pretty(config) {
+        Ok(s) => s,
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {} \n", "写入的配置信息转为json失败!".red());
+            std::process::exit(0);
+        }
+    };
+
+    match file.write_all(json_string.as_bytes()) {
+        Ok(_) => {
+            Ok(())
+        }
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {} \n", "写入Aspen配置文件失败!".red());
+            std::process::exit(0);
+        }
     }
+}
 }

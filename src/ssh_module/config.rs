@@ -22,7 +22,7 @@ pub fn get_config() -> Vec<ServerConfig> {
     let file_path = aspen_config.service_config_path;
 
     if file_path.is_empty() {
-        eprintln!("\n [Aspen Error] => {}\n", "💔 您的配置文件地址尚未设置,请先执行命令 server-path 设置! ".red());
+        eprintln!("\n [Aspen Error] => {}\n", "💔 您的配置文件地址尚未设置,请先执行命令 set-path 设置! ".red());
         process::exit(0);
     }
 
