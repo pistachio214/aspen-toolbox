@@ -32,16 +32,7 @@ pub fn init_aspen() {
         let dir = env!("CARGO_PKG_NAME");
 
         let shell_dir = format!("{}/{}/shell", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
-        // 检查文件夹是否存在，如果不存在则创建
-        if !Path::new(&shell_dir).exists() {
-            fs::create_dir_all(&shell_dir).unwrap();
-
-            // 设置文件夹权限为 775
-            let metadata = fs::metadata(&shell_dir).unwrap();
-            let mut permissions = metadata.permissions();
-            permissions.set_mode(0o775);
-            fs::set_permissions(&shell_dir, permissions).unwrap();
-        }
+        generate_folder(shell_dir.clone());
 
         let controller_path = shell_dir.clone() + "/controller.sh";
         // 要写入的内容
@@ -130,6 +121,41 @@ fn build_get_servers_path_toolbox() -> Command {
 fn error_action() {
     eprintln!("\n[Aspen Error] => {} \n", "非法指令".red(), );
     process::exit(0);
+}
+
+// 构建存储文件夹
+pub fn generate_folder(folder_path: String) {
+    // 检查文件夹是否存在，如果不存在则创建
+    if !Path::new(&folder_path).exists() {
+        fs::create_dir_all(&folder_path).unwrap();
+        match fs::create_dir_all(&folder_path) {
+            Ok(_) => {}
+            Err(_) => {
+                eprintln!("\n[Aspen Error] => 创建文件夹 {} 失败！ \n", folder_path.red(), );
+                process::exit(0);
+            }
+        }
+
+        // 获取目标文件夹信息
+        let metadata = match fs::metadata(&folder_path) {
+            Ok(meta) => meta,
+            Err(_) => {
+                eprintln!("\n[Aspen Error] => 获取目标文件夹 {} 相关信息失败！ \n", folder_path.red(), );
+                process::exit(0);
+            }
+        };
+
+        // 设置文件夹权限为 775
+        let mut permissions = metadata.permissions();
+        permissions.set_mode(0o775);
+        match fs::set_permissions(&folder_path, permissions) {
+            Ok(_) => {}
+            Err(_) => {
+                eprintln!("\n[Aspen Error] => 设置文件夹 {} 权限失败！ \n", folder_path.red(), );
+                process::exit(0);
+            }
+        }
+    }
 }
 
 // 构建脚本

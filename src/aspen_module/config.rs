@@ -1,10 +1,14 @@
 use std::{
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
-    io::{Read, Write},
+    io::{Read, Write, prelude::*},
+    fs,
 };
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+
+use crate::aspen_module::cli::{generate_folder, get_home_dir};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -16,13 +20,18 @@ pub struct Config {
  */
 pub fn get_aspen_config() -> Config {
     if let Some(home_dir) = dirs::home_dir() {
+        let dir = env!("CARGO_PKG_NAME");
+        let config_dir = format!("{}/{}/config", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
+
+        generate_folder(config_dir.clone());
+
         // 命令指定的配置文件位置
-        let config_path = home_dir.join("aspen_config.json");
+        let config_path = format!("{}/aspen_config.json", config_dir);
 
         //配置文件存在就直接读取,反之则创建
         if Path::new(&config_path).exists() {
             // 打开文件
-            read_config(&config_path).unwrap()
+            read_config(&PathBuf::from(config_path.as_str())).unwrap()
         } else {
             // 创建一个 Config 结构体实例
             let config = Config {
@@ -40,7 +49,7 @@ pub fn get_aspen_config() -> Config {
 
             if let Ok(mut file) = File::create(&config_path) {
                 file.write_all(json_string.as_bytes()).unwrap();
-                println!("成功创建并写入 JSON 文件: {:?}", config_path);
+                // println!("成功创建并写入 JSON 文件: {:?}", config_path);
 
                 config
             } else {
