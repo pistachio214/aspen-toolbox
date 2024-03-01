@@ -12,6 +12,7 @@ pub struct ServerConfig {
     pub port: u32,
     pub username: String,
     pub password: String,
+    pub category: String,
 }
 
 /**

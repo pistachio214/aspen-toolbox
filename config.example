@@ -1,6 +1,7 @@
 [
   {
     "title": "Localhost",
+    "category": "CentOS Linux release 7.9.2009 (Core)",
     "host": "127.0.0.1",
     "port": 22,
     "username": "root",
