@@ -144,12 +144,17 @@ fn print_services_table(lines: &Vec<ServerConfig>) {
 
     table.set_format(format);
     // 设置标题
-    table.set_titles(row!["ID","Title","Host","Port","Server type","Username","Remark"]);
+    table.set_titles(row![
+        "ID","Title","Host","Port","Server type","Username","Remark"
+    ]);
 
     // 添加行
     if !lines.is_empty() {
         for (index, line) in lines.iter().enumerate() {
-            table.add_row(row![(index+1),line.title, line.host, line.port,line.category,line.username,line.remark]);
+            table.add_row(row![
+                (index+1),line.title, line.host, line.port,
+                line.category,line.username,line.remark
+            ]);
         }
     }
 
@@ -164,201 +169,212 @@ fn print_services_table(lines: &Vec<ServerConfig>) {
  * 重点中的重点!! 实现ssh链接服务器的全部功能
  */
 fn ssh_login(config: &ServerConfig) {
-    let connect = format!("{}:{}", config.host.clone(), config.port.clone());
-    let username = config.username.clone();
-    let password = config.password.clone();
-    let title = config.title.clone();
-
-    println!("\n[Aspen Waiting] ==> 正在登录【 {} 】，请稍等...", title.green());
-
-    // 此处处理系统之间兼容问题,macos走脚本方式处理,解决命令联想和vim显示问题
-
     // 排除Windows、MacOs、linux之外的系统
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
     {
         eprintln!("\n[Aspen Error] => {}\n", "暂时不支持除 Windows、MacOs、linux之外的系统".red());
         process::exit(0);
     }
-
-    // macOS 平台下处理
+    // macOS 平台下编译
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
-        let dir = env!("CARGO_PKG_NAME");
-
-        let controller_path = format!("{}/{}/shell/controller.sh", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
-
-        // 参数列表 (名称,IP,Port,用户名,密码)
-        let args = vec![
-            "-e".to_string(),
-            controller_path,
-            title.clone(),
-            config.host.clone(),
-            config.port.clone().to_string(),
-            username.clone(),
-            password.clone(),
-        ];
-
-        // 执行用户输入的命令
-        let mut child = process::Command::new("sh")
-            .args(&args)
-            .spawn()
-            .expect("执行命令失败");
-
-        // 从子进程的 stdin 获取一个写入器
-        if let Some(mut stdin) = child.stdin.take() {
-            // 向子进程发送输入
-            writeln!(stdin, "echo 'Hello, World!'").unwrap();
-        }
-
-        // 从子进程的 stdout 获取一个读取器
-        if let Some(mut stdout) = child.stdout.take() {
-            // 从子进程读取输出
-            match io::copy(&mut stdout, &mut io::stdout()) {
-                Ok(_) => (),
-                Err(_) => {
-                    eprintln!("\n[Aspen Error] => {}\n", "从子进程读取输出失败！".red());
-                    process::exit(0);
-                }
-            }
-        }
-
-        // 从子进程的 stderr 获取一个读取器
-        if let Some(mut stderr) = child.stderr.take() {
-            // 从子进程读取错误信息
-            match io::copy(&mut stderr, &mut io::stderr()) {
-                Ok(_) => (),
-                Err(_) => {
-                    eprintln!("\n[Aspen Error] => {}\n", "从子进程读取错误信息失败！".red());
-                    process::exit(0);
-                }
-            }
-        }
-
-        // 等待子进程执行完毕
-        let status = child.wait().unwrap();
-        println!("\n[Aspen Success] ==> 您已退出【 {} 】\n", title.green());
-        process::exit(0);
+        ssh_login_macos_and_linux(&config);
     }
 
     // windows平台下处理
     #[cfg(target_os = "windows")]
     {
-        let mut sess = match Session::new() {
-            Ok(session) => session,
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {}\n", "与主机进行 Session 链接失败！".red());
-                process::exit(0);
-            }
-        };
+        ssh_login_windows(&config)
+    }
+}
 
-        match TcpStream::connect(connect) {
-            Ok(tcp) => {
-                sess.set_tcp_stream(tcp);
-            }
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {}\n", "链接超时,请检查您的网络是否通畅或者您的Host信息是否正确".red());
-                process::exit(0);
-            }
+// windows 系统中,目前使用ssh2来处理远程登录问题
+#[cfg(target_os = "windows")]
+fn ssh_login_windows(config: &ServerConfig) {
+    let connect = format!("{}:{}", config.host.clone(), config.port.clone());
+    let username = config.username.clone();
+    let password = config.password.clone();
+    let title = config.title.clone();
+
+    println!("\n[Aspen Waiting] ==> 正在登录【 {} 】，请稍等...", config.title.clone().green());
+
+    let mut sess = match Session::new() {
+        Ok(session) => session,
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机进行 Session 链接失败！".red());
+            process::exit(0);
         }
+    };
 
-        match sess.handshake() {
-            Ok(_) => (),
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {}\n", "与主机进行传输层协议协商失败!".red());
-                process::exit(0);
-            }
+    match TcpStream::connect(connect) {
+        Ok(tcp) => {
+            sess.set_tcp_stream(tcp);
         }
-
-        match sess.userauth_password(&username, &password) {
-            Ok(_) => (),
-            Err(e) => {
-                eprintln!("\n[Aspen Error] => {}\n", e.message().red());
-                process::exit(0);
-            }
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "链接超时,请检查您的网络是否通畅或者您的Host信息是否正确".red());
+            process::exit(0);
         }
+    }
 
-        let mut pty_modes = PtyModes::new();
-        pty_modes.set_boolean(ssh2::PtyModeOpcode::ECHO, false); //关闭回显
-        pty_modes.set_boolean(ssh2::PtyModeOpcode::IGNCR, true); //忽略输入的回车
-
-        let mut channel = match sess.channel_session() {
-            Ok(channel) => channel,
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {}\n", "与主机会话通道建立失败".red());
-                process::exit(0);
-            }
-        };
-
-        match channel.request_pty("xterm", Some(pty_modes), None) {
-            Ok(_) => {}
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {}\n", "与主机会话通道请求PTY失败！".red());
-                process::exit(0);
-            }
+    match sess.handshake() {
+        Ok(_) => (),
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机进行传输层协议协商失败!".red());
+            process::exit(0);
         }
+    }
 
-        match channel.shell() {
-            Ok(_) => {}
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => {}\n", "启动SSH失败！".red());
-                process::exit(0);
-            }
+    match sess.userauth_password(&username, &password) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("\n[Aspen Error] => {}\n", e.message().red());
+            process::exit(0);
         }
+    }
 
-        match channel.handle_extended_data(ssh2::ExtendedData::Merge) {
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!("\n[Aspen Error] => {}\n", e.message().red());
-                process::exit(0);
-            }
+    let mut pty_modes = PtyModes::new();
+    pty_modes.set_boolean(ssh2::PtyModeOpcode::ECHO, false); //关闭回显
+    pty_modes.set_boolean(ssh2::PtyModeOpcode::IGNCR, true); //忽略输入的回车
+
+    let mut channel = match sess.channel_session() {
+        Ok(channel) => channel,
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机会话通道建立失败".red());
+            process::exit(0);
         }
+    };
 
-        // 阻塞模式最后设置,避免实例化操作链接会阻塞
-        sess.set_blocking(false);
+    match channel.request_pty("xterm", Some(pty_modes), None) {
+        Ok(_) => {}
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "与主机会话通道请求PTY失败！".red());
+            process::exit(0);
+        }
+    }
 
-        let mut ssh_stdin = channel.stream(0);
+    match channel.shell() {
+        Ok(_) => {}
+        Err(_) => {
+            eprintln!("\n[Aspen Error] => {}\n", "启动SSH失败！".red());
+            process::exit(0);
+        }
+    }
 
-        let stdin_thread = thread::spawn(move || {
+    match channel.handle_extended_data(ssh2::ExtendedData::Merge) {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("\n[Aspen Error] => {}\n", e.message().red());
+            process::exit(0);
+        }
+    }
+
+    // 阻塞模式最后设置,避免实例化操作链接会阻塞
+    sess.set_blocking(false);
+
+    let mut ssh_stdin = channel.stream(0);
+
+    let stdin_thread = thread::spawn(move || {
+        let mut buf = [0; 1024];
+        loop {
+            let size = stdin().read(&mut buf).unwrap();
+            ssh_stdin.write_all(&buf[..size]).unwrap();
+        }
+    });
+
+    let stdout_thread = thread::spawn(move || {
+        println!("\n {} \n", "Login Successful!!!".green());
+        loop {
             let mut buf = [0; 1024];
-            loop {
-                let size = stdin().read(&mut buf).unwrap();
-                ssh_stdin.write_all(&buf[..size]).unwrap();
-            }
-        });
-
-        let stdout_thread = thread::spawn(move || {
-            println!("\n {} \n", "Login Successful!!!".green());
-            loop {
-                let mut buf = [0; 1024];
-                match channel.read(&mut buf) {
-                    Ok(c) if c > 0 => {
-                        print!("{}", std::str::from_utf8(&buf).unwrap());
-                        stdout().flush().unwrap();
-                    }
-                    Ok(0) => break,
-                    _ => (),
+            match channel.read(&mut buf) {
+                Ok(c) if c > 0 => {
+                    print!("{}", std::str::from_utf8(&buf).unwrap());
+                    stdout().flush().unwrap();
                 }
+                Ok(0) => break,
+                _ => (),
             }
+        }
 
-            let exit_status = match channel.exit_status() {
-                Ok(n) => n,
-                Err(_) => {
-                    eprintln!("\n[Aspen Error] => {}\n", "主机会话状态丢失！".red());
-                    channel.close().unwrap();
-                    process::exit(0);
-                }
-            };
-
-            if exit_status == 0 {
-                println!("\n[Aspen Success] ==> 您已退出【 {} 】\n", title.green());
+        let exit_status = match channel.exit_status() {
+            Ok(n) => n,
+            Err(_) => {
+                eprintln!("\n[Aspen Error] => {}\n", "主机会话状态丢失！".red());
                 channel.close().unwrap();
                 process::exit(0);
             }
-        });
+        };
 
-        stdin_thread.join().unwrap();
-        stdout_thread.join().unwrap();
+        if exit_status == 0 {
+            println!("\n[Aspen Success] ==> 您已退出【 {} 】\n", title.green());
+            channel.close().unwrap();
+            process::exit(0);
+        }
+    });
+
+    stdin_thread.join().unwrap();
+    stdout_thread.join().unwrap();
+}
+
+// macos linux 系统中,ssh登录的实现(采用脚本命令去处理,解决ssh2中命令tab和vim编码问题)
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+fn ssh_login_macos_and_linux(config: &ServerConfig) {
+    println!("\n[Aspen Waiting] ==> 正在登录【 {} 】，请稍等...", config.title.clone().green());
+
+    let dir = env!("CARGO_PKG_NAME");
+    let controller_path = format!("{}/{}/shell/controller.sh", get_home_dir().to_str().unwrap().to_string(), dir.to_string());
+
+    // 参数列表 (名称,IP,Port,用户名,密码)
+    let args = vec![
+        "-e".to_string(),
+        controller_path,
+        config.title.clone(),
+        config.host.clone(),
+        config.port.clone().to_string(),
+        config.username.clone(),
+        config.password.to_string(),
+    ];
+
+    // 执行用户输入的命令
+    let mut child = process::Command::new("sh")
+        .args(&args)
+        .spawn()
+        .expect("执行命令失败");
+
+    // 从子进程的 stdin 获取一个写入器
+    if let Some(mut stdin) = child.stdin.take() {
+        // 向子进程发送输入
+        writeln!(stdin, "echo 'Hello, World!'").unwrap();
     }
+
+    // 从子进程的 stdout 获取一个读取器
+    if let Some(mut stdout) = child.stdout.take() {
+        // 从子进程读取输出
+        match io::copy(&mut stdout, &mut io::stdout()) {
+            Ok(_) => (),
+            Err(_) => {
+                eprintln!("\n[Aspen Error] => {}\n", "从子进程读取输出失败！".red());
+                process::exit(0);
+            }
+        }
+    }
+
+    // 从子进程的 stderr 获取一个读取器
+    if let Some(mut stderr) = child.stderr.take() {
+        // 从子进程读取错误信息
+        match io::copy(&mut stderr, &mut io::stderr()) {
+            Ok(_) => (),
+            Err(_) => {
+                eprintln!("\n[Aspen Error] => {}\n", "从子进程读取错误信息失败！".red());
+                process::exit(0);
+            }
+        }
+    }
+
+    // 等待子进程执行完毕
+    child.wait().unwrap();
+
+    println!("\n[Aspen Success] ==> 您已退出【 {} 】\n", config.title.green());
+    process::exit(0);
 }
 
 //清屏

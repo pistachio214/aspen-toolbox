@@ -136,29 +136,35 @@ pub fn generate_folder(folder_path: String) {
             }
         }
 
-        // 获取目标文件夹信息
-        let metadata = match fs::metadata(&folder_path) {
-            Ok(meta) => meta,
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => 获取目标文件夹 {} 相关信息失败！ \n", folder_path.red(), );
-                process::exit(0);
-            }
-        };
+        #[cfg(any(target_os = "macos", target_os = "linux"))]
+        {
+            // 获取目标文件夹信息
+            let metadata = match fs::metadata(&folder_path) {
+                Ok(meta) => meta,
+                Err(_) => {
+                    eprintln!("\n[Aspen Error] => 获取目标文件夹 {} 相关信息失败！ \n", folder_path.red(), );
+                    process::exit(0);
+                }
+            };
 
-        // 设置文件夹权限为 775
-        let mut permissions = metadata.permissions();
-        permissions.set_mode(0o775);
-        match fs::set_permissions(&folder_path, permissions) {
-            Ok(_) => {}
-            Err(_) => {
-                eprintln!("\n[Aspen Error] => 设置文件夹 {} 权限失败！ \n", folder_path.red(), );
-                process::exit(0);
+            if cfg!(target_os = "macos") || cfg!(target_os = "linux" || ) {
+                // 设置文件夹权限为 775
+                let mut permissions = metadata.permissions();
+                permissions.set_mode(0o775);
+                match fs::set_permissions(&folder_path, permissions) {
+                    Ok(_) => {}
+                    Err(_) => {
+                        eprintln!("\n[Aspen Error] => 设置文件夹 {} 权限失败！ \n", folder_path.red(), );
+                        process::exit(0);
+                    }
+                }
             }
         }
     }
 }
 
 // 构建脚本
+#[cfg(any(target_os = "macos", target_os = "linux"))]
 fn generate_shell(file_path: String, content: &str) {
     match fs::metadata(&file_path) {
         Ok(_) => {}
