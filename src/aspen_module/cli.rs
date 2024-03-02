@@ -1,12 +1,12 @@
 use std::{fs, process};
-use std::fs::{OpenOptions};
-
-use clap::{Arg, Command};
-use colored::Colorize;
-
-use std::io::prelude::*;
-use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
+use std::fs::{OpenOptions};
+use std::io::prelude::*;
+use colored::Colorize;
+use clap::{Arg, Command};
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 
 use crate::ssh_module::command::{
     impl_servers_table_action, impl_ssh_action,

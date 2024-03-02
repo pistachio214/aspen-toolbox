@@ -1,9 +1,12 @@
-use std::io::{Read, stdin, stdout, Write};
-use std::net::TcpStream;
-use std::{env, io, process, thread};
+use std::io::{stdin, Write};
+use std::{env, io, process};
 use clap::ArgMatches;
 use colored::Colorize;
 use prettytable::{format, row, Table};
+
+#[cfg(target_os = "windows")]
+use std::{net::TcpStream, thread, io::{stdout, Read}};
+#[cfg(target_os = "windows")]
 use ssh2::{PtyModes, Session};
 
 use crate::aspen_module::config::{get_aspen_config, write_aspen_config};

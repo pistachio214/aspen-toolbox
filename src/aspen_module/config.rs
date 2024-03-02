@@ -1,10 +1,13 @@
 use std::{
     fs::{File, OpenOptions},
     path::{Path, PathBuf},
-    io::{Read, Write, prelude::*},
+    io::{Read, Write},
 };
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
+
+#[cfg(target_os = "windows")]
+use std::io::prelude::*;
 
 use crate::aspen_module::cli::{generate_folder, get_home_dir};
 
