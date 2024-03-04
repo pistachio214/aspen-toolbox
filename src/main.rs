@@ -1,7 +1,9 @@
 mod ssh_module;
 mod aspen_module;
 
-use std::process;
+#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+use colored::Colorize;
+
 use crate::aspen_module::cli::{run, init_aspen};
 
 fn main() {
@@ -9,7 +11,7 @@ fn main() {
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
     {
         eprintln!("\n[Aspen Error] => {}\n", "暂时不支持除 Windows、MacOs、linux之外的系统".red());
-        process::exit(0);
+        std::process::exit(0);
     }
 
     // 初始化命令行工具
