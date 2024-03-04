@@ -48,7 +48,13 @@ fn read_server_config(file_path: &PathBuf) -> Result<Vec<ServerConfig>, Box<dyn 
         match file.read_to_string(&mut contents) {
             Ok(_) => {
                 // 使用 serde_json 解析 JSON
-                let config: Vec<ServerConfig> = serde_json::from_str(&contents).unwrap();
+                let config: Vec<ServerConfig> = match serde_json::from_str(&contents) {
+                    Ok(str) => str,
+                    _ => {
+                        eprintln!("\n[Aspen Error] => {} \n", "解析配置json文件失败,请检查您的配置文件内容是否有误!".red());
+                        process::exit(0);
+                    }
+                };
 
                 Ok(config)
             }
