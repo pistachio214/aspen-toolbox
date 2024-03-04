@@ -158,7 +158,7 @@ fn print_services_table(lines: &Vec<ServerConfig>) {
     table.set_format(format);
     // 设置标题
     table.set_titles(row![
-        "ID","Title","Host","Port","Server type","Username","Remark"
+        "ID","Title","Host","Port","Server Type","Username","Remark"
     ]);
 
     // 添加行
