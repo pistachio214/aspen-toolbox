@@ -74,6 +74,11 @@ fn ssh_none_index_action() {
 
             let guess: i32 = match guess.trim().parse() {
                 Ok(num) => {
+                    if num < 1 {
+                        eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "序号必须大于0!".red(), "序号".green());
+                        continue;
+                    }
+
                     if num > config_lines.len() as i32 {
                         eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "您输入的序号超过了配置项的数量!".red(), "序号".green());
                         continue;
