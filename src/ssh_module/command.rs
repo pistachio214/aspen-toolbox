@@ -172,12 +172,6 @@ fn print_services_table(lines: &Vec<ServerConfig>) {
  * 重点中的重点!! 实现ssh链接服务器的全部功能
  */
 fn ssh_login(config: &ServerConfig) {
-    // 排除Windows、MacOs、linux之外的系统
-    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
-    {
-        eprintln!("\n[Aspen Error] => {}\n", "暂时不支持除 Windows、MacOs、linux之外的系统".red());
-        process::exit(0);
-    }
     // macOS 平台下编译
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     {
