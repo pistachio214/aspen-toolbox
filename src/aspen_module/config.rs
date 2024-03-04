@@ -6,9 +6,6 @@ use std::{
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
-#[cfg(target_os = "windows")]
-use std::io::prelude::*;
-
 use crate::aspen_module::cli::{generate_folder, get_home_dir};
 
 #[derive(Debug, Serialize, Deserialize)]

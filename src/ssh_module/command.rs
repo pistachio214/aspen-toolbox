@@ -1,8 +1,13 @@
 use std::io::{stdin, Write};
-use std::{env, io, process};
+use std::{process};
 use clap::ArgMatches;
 use colored::Colorize;
 use prettytable::{format, row, Table};
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use crate::aspen_module::cli::get_home_dir;
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+use std::{env, io};
 
 #[cfg(target_os = "windows")]
 use std::{net::TcpStream, thread, io::{stdout, Read}};
@@ -11,7 +16,7 @@ use ssh2::{PtyModes, Session};
 
 use crate::aspen_module::config::{get_aspen_config, write_aspen_config};
 use crate::ssh_module::config::{get_config, ServerConfig};
-use crate::aspen_module::cli::get_home_dir;
+
 
 // ssh 命令实现
 pub fn impl_ssh_action(matches: &ArgMatches) {
