@@ -1,5 +1,7 @@
-use std::io::{stdin, Write};
-use std::{process};
+use std::{
+    io::{stdin, Write},
+    process,
+};
 use clap::ArgMatches;
 use colored::Colorize;
 use prettytable::{format, row, Table};
@@ -75,7 +77,7 @@ fn ssh_none_index_action() {
             let guess: i32 = match guess.trim().parse() {
                 Ok(num) => {
                     if num < 1 {
-                        eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "序号必须大于0!".red(), "序号".green());
+                        eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "序号必须大于 0 !".red(), "序号".green());
                         continue;
                     }
 
@@ -107,6 +109,11 @@ fn ssh_none_index_action() {
 fn ssh_index_action(index: String) {
     let key: i32 = match index.trim().parse() {
         Ok(num) => {
+            if num < 1 {
+                eprintln!("\n[Aspen Error] => {} 请重新输入服务器 {}:", "序号必须大于 0 !".red(), "序号".green());
+                process::exit(0);
+            }
+
             num
         }
         Err(_) => {
