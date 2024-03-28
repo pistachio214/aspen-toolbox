@@ -10,7 +10,7 @@ fn main() {
     // 排除Windows、MacOs、linux之外的系统
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
     {
-        eprintln!("\n[Aspen Error] => {}\n", "暂时不支 Windows、MacOs、Linux之外的系统".red());
+        eprintln!("\n[Aspen Error] => {}\n", "暂不支持 Windows、MacOs、Linux之外的系统".red());
         std::process::exit(0);
     }
 
