@@ -3,12 +3,12 @@ name = "aspentool"
 version = "0.1.26"
 edition = "2021"
 
-description = "关于SSH任务的工具"
+description = "SSH Client"
 license = "MIT"
 authors = ["Aspen Soung <songyang410@outlook.com>"]
 documentation = "https://docs.rs/crate/aspentool"
 repository = "https://github.com/pistachio214/aspen-toolbox"
-keywords = ["ssh", "aspen"]
+keywords = ["ssh", "client", "aspen"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
@@ -19,3 +19,4 @@ ssh2 = "0.9.4"
 dirs = "5.0.1"
 serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
+crossterm = "0.27.0"

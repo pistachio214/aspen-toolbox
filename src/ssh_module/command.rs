@@ -12,9 +12,11 @@ use crate::aspen_module::cli::get_home_dir;
 use std::{env, io};
 
 #[cfg(target_os = "windows")]
-use std::{net::TcpStream, thread, io::{stdout, Read}};
+use std::{net::TcpStream, thread, io::{stdout, Read}, time::Duration};
 #[cfg(target_os = "windows")]
-use ssh2::{PtyModes, Session};
+use ssh2::{PtyModes, Session, FLUSH_ALL};
+#[cfg(target_os = "windows")]
+use crossterm::event::{read, Event, KeyCode, KeyEventKind, KeyModifiers};
 
 use crate::aspen_module::config::{get_aspen_config, write_aspen_config};
 use crate::ssh_module::config::{get_config, ServerConfig};
@@ -247,8 +249,8 @@ fn ssh_login_windows(config: &ServerConfig) {
     }
 
     let mut pty_modes = PtyModes::new();
-    pty_modes.set_boolean(ssh2::PtyModeOpcode::ECHO, false); //关闭回显
-    pty_modes.set_boolean(ssh2::PtyModeOpcode::IGNCR, true); //忽略输入的回车
+    pty_modes.set_u32(ssh2::PtyModeOpcode::TTY_OP_OSPEED, 115200);
+    pty_modes.set_u32(ssh2::PtyModeOpcode::TTY_OP_ISPEED, 115200);
 
     let mut channel = match sess.channel_session() {
         Ok(channel) => channel,
@@ -258,7 +260,7 @@ fn ssh_login_windows(config: &ServerConfig) {
         }
     };
 
-    match channel.request_pty("xterm", Some(pty_modes), None) {
+    match channel.request_pty("xterm-256color", Some(pty_modes), Some((80, 24, 0, 0))) {
         Ok(_) => {}
         Err(_) => {
             eprintln!("\n[Aspen Error] => {}\n", "与主机会话通道请求PTY失败！".red());
@@ -288,25 +290,56 @@ fn ssh_login_windows(config: &ServerConfig) {
     let mut ssh_stdin = channel.stream(0);
 
     let stdin_thread = thread::spawn(move || {
-        let mut buf = [0; 1024];
         loop {
-            let size = stdin().read(&mut buf).unwrap();
-            ssh_stdin.write_all(&buf[..size]).unwrap();
-        }
+            let mut buf = [0; 4096];
+            let data = {
+                match read().unwrap() {
+                    Event::Key(e) if matches!(e.kind, KeyEventKind::Press) => match e.code {
+                        KeyCode::Char(c) => match e.modifiers {
+                            KeyModifiers::CONTROL => {
+                                buf[0] = c as u8 - 96;
+                                &buf[..1]
+                            }
+                            KeyModifiers::NONE => c.encode_utf8(&mut buf).as_bytes(),
+                            _ => c.encode_utf8(&mut buf).as_bytes(),
+                        },
+                        _ => match e.code {
+                            KeyCode::Enter => "\n",
+                            KeyCode::Backspace => "\x08",
+                            KeyCode::Tab => "\x09",
+                            KeyCode::Esc => "\x1b",
+                            KeyCode::Home => "\x1b[H",
+                            KeyCode::End => "\x1b[F",
+                            KeyCode::Insert => "\x1b\x5b\x32\x7e",
+                            KeyCode::Delete => "\x1b\x5b\x33\x7e",
+                            KeyCode::Left => "\x1b[D",
+                            KeyCode::Up => "\x1b[A",
+                            KeyCode::Right => "\x1b[C",
+                            KeyCode::Down => "\x1b[B",
+                            _ => todo!(),
+                        }.as_bytes(),
+                    },
+                    _ => continue,
+                }
+            };
+
+            ssh_stdin.write_all(&data).unwrap();
+        };
     });
 
     let stdout_thread = thread::spawn(move || {
         println!("\n {} \n", "Login Successful!!!".green());
         loop {
-            let mut buf = [0; 1024];
+            let mut buf = [0; 4096];
             match channel.read(&mut buf) {
                 Ok(c) if c > 0 => {
-                    print!("{}", std::str::from_utf8(&buf).unwrap());
+                    print!("{}", std::str::from_utf8(&buf[..c]).unwrap());
+                    channel.stream(FLUSH_ALL).flush().unwrap();
                     stdout().flush().unwrap();
                 }
                 Ok(0) => break,
-                _ => (),
-            }
+                _ => thread::sleep(Duration::from_millis(1)),
+            };
         }
 
         let exit_status = match channel.exit_status() {
